@@ -1,0 +1,25 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 3rem;
+    font-family: ui-monospace, monospace;
+    line-height: 1.5;
+    background: #fafafa;
+    color: #222;
+}
+
+main {
+    max-width: 40rem;
+    margin: 0 auto;
+}
+
+h1 {
+    margin-bottom: 0.5rem;
+}
+
+p {
+    color: #666;
+}
