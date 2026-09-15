@@ -2,10 +2,10 @@
 
 [ -f .env ] && . ./.env
 
-. "${APP_DIR:-.}/src/log.sh"
-. "${APP_DIR:-.}/src/http.sh"
+. "${APP_DIR:-.}/src/lib/log.sh"
+. "${APP_DIR:-.}/src/lib/http.sh"
 
-: "${SHARE_ROOT:=./files}"
+: "${SHARE_ROOT:="${APP_DIR:-.}/files"}"
 
 case "$SHARE_ROOT" in
     */) error "\$SHARE_ROOT can't end with slash ('/'): %s" "$SHARE_ROOT"

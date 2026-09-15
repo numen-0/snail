@@ -3,8 +3,8 @@
 [ "${__HTTP_SH_LOADED__:-}" ] && return
 __HTTP_SH_LOADED__=1
 
-. "${APP_DIR:-.}/src/log.sh"
-. "${APP_DIR:-.}/src/utils.sh"
+. "${APP_DIR:-.}/src/lib/log.sh"
+. "${APP_DIR:-.}/src/lib/utils.sh"
 
 HTTP_SERVER="snailHTTP/0.1.0"
 : "${HTTP_HOST:=localhost}"

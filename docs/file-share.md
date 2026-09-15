@@ -3,6 +3,8 @@
 A simple file-sharing handler for creating, replacing, downloading, listing, and
 deleting files and directories.
 
+> [src](/src/handler/file-sharing.sh)
+
 ## API
 
 - `HEAD` requests

@@ -2,12 +2,12 @@
 
 [ -f .env ] && . ./.env
 
-. "${APP_DIR:-.}/src/log.sh"
-. "${APP_DIR:-.}/src/http.sh"
-. "${APP_DIR:-.}/src/utils.sh"
+. "${APP_DIR:-.}/src/lib/log.sh"
+. "${APP_DIR:-.}/src/lib/http.sh"
+. "${APP_DIR:-.}/src/lib/utils.sh"
 
-: "${STATIC_ROOT:=./page}"
-: "${STATIC_404:=./page/404.html}"
+: "${STATIC_ROOT:="${APP_DIR:-.}/page"}"
+: "${STATIC_404:="${APP_DIR:-.}/page/404.html"}"
 
 # ------------------------------------------------------------------------------
 

@@ -2,8 +2,10 @@
 
 A static-file handler for serving files from a directory.
 
-It supports `GET` and `HEAD` requests, automatic `index.html` resolution,
-basic *MIME* type detection, `ETag` caching, and custom `404` pages.
+It supports `GET` and `HEAD` requests, automatic `index.html` resolution, basic
+*MIME* type detection, `ETag` caching, and custom `404` pages.
+
+> [src](/src/handler/static.sh)
 
 ## Configuration
 

@@ -3,8 +3,8 @@ set -eu
 
 [ -f .env ] && . ./.env
 
-. "${APP_DIR:-.}/src/http.sh"
-. "${APP_DIR:-.}/src/log.sh"
+. "${APP_DIR:-.}/src/lib/http.sh"
+. "${APP_DIR:-.}/src/lib/log.sh"
 
 debug 'Server config:\n%s' "$(cat <<EOF
 APP_DIR="$APP_DIR"
