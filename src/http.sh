@@ -3,7 +3,8 @@
 [ "${__HTTP_SH_LOADED__:-}" ] && return
 __HTTP_SH_LOADED__=1
 
-. "${ROOT_DIR:-.}/src/log.sh"
+. "${APP_DIR:-.}/src/log.sh"
+. "${APP_DIR:-.}/src/utils.sh"
 
 HTTP_SERVER="snailHTTP/0.1.0"
 : "${HTTP_HOST:=localhost}"
@@ -17,10 +18,15 @@ API:
         http_response_empty     >res        status [key: value]...
 
         http_response_200       >res        [msg]
+        http_response_201       >res        [msg]
+        http_response_204       >res
         http_response_303       >res        location [msg]
+        http_response_304       >res
         http_response_400       >res        [msg]
         http_response_404       >res        [msg]
         http_response_405       >res        [msg]
+        http_response_409       >res        [msg]
+        http_response_411       >res        [msg]
         http_response_418       >res        [msg]
         http_response_500       >res        [msg]
         http_response_505       >res        [msg]
@@ -28,7 +34,7 @@ API:
 ENV:
         HTTP_HOST       : <host>      = '$HTTP_HOST'
 
-NOTE:
+NOTES:
         - Headers must be ASCII printable or spaces and match the next regex:
           "^[^:']\\+: [^']\\+$"
 DOCS
@@ -47,6 +53,7 @@ http_server() { (
 
     info 'Starting http server %s\n' "$HTTP_SERVER"
     info 'Listening on http://%s:%s\n' "$HTTP_HOST" "$port"
+    info 'Using handler: %s\n' "$handler"
 
     while true; do
         cat "$fifo" |
@@ -66,7 +73,7 @@ http_response() { (
 
     reason=$(_http_reason "$status")
     body=$(cat)
-    length=$(_length "$body")
+    length=$(str_len "$body")
 
     info 'http response: %s %s' "$status" "$reason" "$body"
 
@@ -86,19 +93,31 @@ http_response_empty() { (
 
     reason=$(_http_reason "$status")
 
+    case "$status" in
+        204|304) ;;
+        # Note: Required to frame empty responses with `nc`
+        *) set -- 'Content-Length: 0' "$@" ;;
+    esac
+
     info 'http response: %s %s' "$status" "$reason"
 
-    _http_response_headers "$status" "$reason" "$@"
+    _http_response_headers "$status" "$reason" \
+        "$@"
 ) }
 
-http_response_200() { _http_response 200 "${1:-'OK'}"; }
-http_response_303() { _http_response 303 "${2:-'See Other'}" "Location: $1"; }
-http_response_400() { _http_response 400 "${1:-'Bad Request'}"; }
-http_response_404() { _http_response 404 "${1:-'Not Found'}"; }
-http_response_405() { _http_response 405 "${1:-'Method Not Allowed'}"; }
+http_response_200() { _http_response 200 "${1:-OK}"; }
+http_response_201() { _http_response 201 "${1:-Created}"; }
+http_response_204() { http_response_empty 204; }
+http_response_303() { _http_response 303 "${2:-See Other}" "Location: $1"; }
+http_response_304() { http_response_empty 304; }
+http_response_400() { _http_response 400 "${1:-Bad Request}"; }
+http_response_404() { _http_response 404 "${1:-Not Found}"; }
+http_response_405() { _http_response 405 "${1:-Method Not Allowed}"; }
+http_response_409() { _http_response 409 "${1:-Conflict}"; }
+http_response_411() { _http_response 411 "${1:-Missing Content-Length}"; }
 http_response_418() { _http_response 418 "${1:-"I'm a teapot"}"; }
-http_response_500() { _http_response 500 "${1:-'Internal Server Error'}"; }
-http_response_505() { _http_response 505 "${1:-'HTTP Version Not Supported'}"; }
+http_response_500() { _http_response 500 "${1:-Internal Server Error}"; }
+http_response_505() { _http_response 505 "${1:-HTTP Version Not Supported}"; }
 
 # - helpers --------------------------------------------------------------------
 
@@ -140,7 +159,7 @@ _validate_headers() {
 
     while [ "$#" -gt 0 ]; do
 
-        _is_printable_ascii "$1" \
+        str_is_printable_ascii "$1" \
             && printf '%s' "$1" \
             | grep -q "^[^:']\+: [^']\+$" || {
             error 'invalid HTTP header: %s' "$1"
@@ -153,28 +172,22 @@ _validate_headers() {
     return 0
 }
 
-_is_printable_ascii() {
-    LC_ALL=C
-    case "$1" in
-        *[![:space:][:print:]]*) return 1 ;;
-        *) return 0 ;;
-    esac
-}
-
 _http_reason() {
     case "$1" in
         200) printf '%s' 'OK' ;;
+        201) printf '%s' 'Created' ;;
+        204) printf '%s' 'No Content' ;;
         303) printf '%s' 'See Other' ;;
         304) printf '%s' 'Not Modified' ;;
         400) printf '%s' 'Bad Request' ;;
         404) printf '%s' 'Not Found' ;;
         405) printf '%s' 'Method Not Allowed' ;;
+        409) printf '%s' 'Conflict' ;;
+        411) printf '%s' 'Missing Content-Length' ;;
         418) printf '%s' "I'm a teapot" ;;
         500) printf '%s' 'Internal Server Error' ;;
         505) printf '%s' 'HTTP Version Not Supported' ;;
         *)   printf '%s' 'Unknown' ;;
     esac
 }
-
-_length() { printf '%s' "$1" | wc -c; }
 

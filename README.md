@@ -2,19 +2,24 @@
 
 Snail is a tiny static *HTTP* server written in *POSIX* shell.
 
-It uses `nc` to listen for *HTTP* connections and serves files from a
-configurable directory. The goal is to keep the implementation small, simple,
-and easy to understand.
+It provides the low-level pieces needed to build small *HTTP* servers and
+request handlers without pulling in a larger framework. The implementation is
+intentionally small, simple, and easy to understand.
 
-Currently Snail supports:
+Snail also includes a few handlers built on top of the library. They serve as
+examples of what can be built with it, while being useful enough to run in
+production.
+
+## Server Features
 
 - `HTTP/1.1`
 - `GET` and `HEAD` requests
-- Static file serving
-- Automagic `index.html` for directories
-- Configurable custom `404` pages
 - Basic *MIME* type detection
-- `ETag` support
+
+## Requirements
+
+- Unix sistem
+- `nc`
 
 ## Local development
 
