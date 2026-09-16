@@ -12,6 +12,9 @@ API:
         str_len                 >len        str
         str_lower               >len        str
         str_is_printable_ascii  0|1         str
+
+        fmt_bytes_to_human      >str        num
+        fmt_number              >str        num
 DOCS
     exit 0
 fi
@@ -50,4 +53,27 @@ file_content_type() {
         *.pdf)          printf '%s' 'application/pdf' ;;
         *)              printf '%s' 'application/octet-stream' ;;
     esac
+}
+
+fmt_bytes_to_human() {
+    if [ "$1" -lt 1024 ]; then
+        printf '%sb' "$1"
+    elif [ "$1" -lt 1048576 ]; then
+        printf '%s.%sKiB' \
+            "$(( $1 / 1024 ))" \
+            "$(( ($1 % 1024) * 10 / 1024 ))"
+    elif [ "$1" -lt $((1073741824)) ]; then
+        printf '%s.%sMiB' \
+            "$(( $1 / 1048576 ))" \
+            "$(( ($1 % 1048576) * 10 / 1048576 ))"
+    else
+        printf '%s.%sGiB' \
+            "$(( $1 / 1073741824 ))" \
+            "$(( ($1 % 1073741824) * 10 / 1073741824 ))"
+    fi
+}
+
+fmt_number() {
+    printf '%s\n' "$1" |
+        sed ':a;s/\([0-9]\)\([0-9][0-9][0-9]\)\(\.[0-9]*\)*$/\1.\2\3/;ta'
 }

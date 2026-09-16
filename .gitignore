@@ -1,4 +1,5 @@
 .env*
 !.env.example
 
-/files
+/data/file-share/*
+!/data/file-share/style.css

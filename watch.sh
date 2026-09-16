@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-. "${ROOT_DIR:-.}/src/log.sh"
+. "${ROOT_DIR:-.}/src/lib/log.sh"
 
 [ -f .env ] && . ./.env
 
@@ -16,9 +16,7 @@ start_main() {
     MAIN_PID=$!
 }
 
-stop_main() {
-    kill -- "-$MAIN_PID" 2>/dev/null || true
-}
+stop_main() { kill -- "-$MAIN_PID" 2>/dev/null || true; }
 
 info "starting main script..."
 start_main
@@ -27,7 +25,7 @@ trap 'stop_main' EXIT INT TERM
 touch "$WATCH"
 
 while sleep 1; do
-    if find page src "$MAIN" \
+    if find ./data/static src "$MAIN" \
         -newer "$WATCH" \
         -print -quit \
         | grep -q .

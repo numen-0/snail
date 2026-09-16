@@ -5,17 +5,20 @@
 . "${APP_DIR:-.}/src/lib/log.sh"
 . "${APP_DIR:-.}/src/lib/http.sh"
 
-: "${SHARE_ROOT:="${APP_DIR:-.}/files"}"
+: "${SHARE_ROOT:="${APP_DIR:-.}/data/file-share"}"
+SHARE_404="${SHARE_ROOT}/404.html"
 
-case "$SHARE_ROOT" in
-    */) error "\$SHARE_ROOT can't end with slash ('/'): %s" "$SHARE_ROOT"
-        http_response_500 'Server config error' ;;
-esac
+# TODO: web
+#   - file preview?
+#   - upload files
+#   - template input should be scaped
+#   - ls table:
+#       - date?
 
-[ -d "$SHARE_ROOT" ] || {
-    error "\$SHARE_ROOT must be a existing directory: %s" "$SHARE_ROOT"
-        http_response_500 'Server config error'
-}
+# TODO: uploads/downloads
+#   - safe file into tmp
+#   - trap the file
+#   - do the thing
 
 # TODO: accept some ?args...
 #   - DELETE
@@ -26,7 +29,7 @@ esac
 #       ?short=dirs
 #       ?filter=files
 
-# ------------------------------------------------------------------------------
+# - api ------------------------------------------------------------------------
 
 _CR="$(printf '\r')"
 serve() { (
@@ -71,13 +74,19 @@ serve() { (
             && printf '%s\n' "$header" >&2
     done
 
-    case "$method" in
-        HEAD|GET)   _get "$path" ;;
-        POST)       _post "$path" ;;
-        PUT)        _put "$path" ;;
-        DELETE)     _delete "$path" ;;
-        *)          debug 'Method not allowed: %s' "$method"
-                    http_response_405 ;;
+    case "$path" in
+        /api|/api/*) _api "$method" "${path#/api}" ;;
+        /web|/web/*) _web "$method" "${path#/web}" ;;
+        /)  [ "$method" = GET ] || [ "$method" = HEAD ] || {
+                debug 'Method not allowed: %s' "$method"
+                http_response_405
+                return
+            }
+
+            page_home
+            ;;
+
+        *)  http_response_404 ;;
     esac
 ) }
 
@@ -139,7 +148,6 @@ list_directory() { (
 
     info 'http response: %s %s - %s' "$status" "$reason" "$dir"
 
-
     # Note: command substitution strips trailing newlines
     _http_response_headers "$status" "$reason" \
         'Content-Type: text/plain; charset=utf-8' \
@@ -149,7 +157,224 @@ list_directory() { (
     [ "${method:-}" = "HEAD" ] || printf '%s\n' "$body"
 ) }
 
+# - pages ----------------------------------------------------------------------
+
+page_home() { (
+    c_files=$(find "$SHARE_ROOT" -type f | wc -l)
+    c_directories=$(find "$SHARE_ROOT" -type d | wc -l)
+    c_bytes=$(du -s "$SHARE_ROOT" | cut -f1)
+
+    body=$(cat <<EOF
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Snail</title>
+    <link rel="stylesheet" href="/api/style.css">
+</head>
+<body>
+  <main>
+    <h1>Snail</h1>
+
+    <nav>
+      <a href="/">home</a>
+      <a href="/web/">root</a>
+    </nav>
+
+    <section class="stats">
+      <div class="stats-row">
+        <span>directories</span>
+        <strong>$(fmt_number "$c_directories")</strong>
+      </div>
+
+      <div class="stats-row">
+        <span>files</span>
+        <strong>$(fmt_number "$c_files")</strong>
+      </div>
+
+      <div class="stats-row">
+        <span>bytes</span>
+        <strong>$(fmt_bytes_to_human "$c_bytes")</strong>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
+EOF
+)
+
+    _http_response_headers 200 'OK' \
+        'Content-Type: text/html; charset=utf-8' \
+        "Content-Length: $(str_len "$body")"
+
+    [ "${method:-}" = HEAD ] || printf '%s' "$body"
+) }
+
+page_directory() { (
+    dir=$1; shift;
+    cdir=${dir#"$SHARE_ROOT"}
+    parent=$(dirname "$cdir")
+
+    case "$cdir" in
+        */) ;;
+        *) cdir="$cdir/" ;;
+    esac
+
+    [ "$parent" = "/" ] || parent="$parent/"
+
+    body=$(cat <<EOF
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Snail - $cdir</title>
+  <link rel="stylesheet" href="/api/style.css">
+</head>
+<body>
+  <main>
+
+    <nav>
+      <a href="/">home</a>
+      <a href="/web/">root</a>
+      <a href="/web$parent">..</a>
+    </nav>
+
+    <h1>$cdir</h1>
+
+
+    <table class="files">
+      <thead>
+        <tr>
+          <th>name</th>
+          <th>type</th>
+          <th>size</th>
+        </tr>
+      </thead>
+      <tbody>
+$( ( # Note: if a file has a '\t' on it we are cooked ._.
+    for entry in "$dir"*; do
+        [ -e "$entry" ] || continue
+
+        name=${entry##*/}
+
+        if [ -d "$entry" ]; then
+            printf '0\t%s\t%s\n' "$name" "$entry"
+        elif [ -f "$entry" ]; then
+            printf '1\t%s\t%s\n' "$name" "$entry"
+        fi
+    done
+) | sort -f -k1,1 -k2,2 \
+  | while IFS="$(printf '\t')" read -r type name entry; do
+    [ -e "$entry" ] || continue
+
+    path=${entry#"$SHARE_ROOT"}
+
+    if [ -d "$entry" ]; then
+        printf '%s' '      <tr class="directory">'
+        printf '<td><a href="/web%s/">%s/</a></td>' "$path" "$name"
+        printf '%s\n' '<td>-</td><td>-</td></tr>'
+    elif [ -f "$entry" ]; then
+        type=$(file_content_type "$entry")
+        size=$(wc -c < "$entry")
+
+        printf '%s' '      <tr>'
+        printf '<td><a href="/web%s">%s</a></td>' "$path" "$name"
+        printf '<td>%s</td><td>%s</td>' "$type" "$(fmt_bytes_to_human $size)"
+        printf '%s\n' '</tr>'
+    fi
+done)
+    </tablel>
+
+  </main>
+</body>
+</html>
+EOF
+)
+
+    _http_response_headers 200 'OK' \
+        'Content-Type: text/html; charset=utf-8' \
+        "Content-Length: $(str_len "$body")"
+
+    [ "${method:-}" = HEAD ] || printf '%s' "$body"
+) }
+
+page_404() {
+    body=$(cat <<EOF
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>404 - Not Found</title>
+    <link rel="stylesheet" href="/api/style.css">
+</head>
+<body>
+    <main>
+        <h1>404</h1>
+        <p>The page you're looking for doesn't exist.</p>
+    </main>
+</body>
+</html>
+EOF
+)
+
+    _http_response_headers 404 'Not Found' \
+        'Content-Type: text/html; charset=utf-8' \
+        "Content-Length: $(str_len "$body")"
+
+    [ "${method:-}" = HEAD ] || printf '%s' "$body"
+}
+
 # ------------------------------------------------------------------------------
+
+_api() { (
+    method=$1; path=$2; shift 2;
+
+    case "$method" in
+        HEAD|GET) _get "$path" ;;
+        POST)     _post "$path" ;;
+        PUT)      _put "$path" ;;
+        DELETE)   _delete "$path" ;;
+        *)        http_response_405 ;;
+    esac
+) }
+
+_web() { (
+    method=$1; path=$2; shift 2;
+
+    case "$method" in
+        HEAD|GET) _web_get "${path}" ;;
+        *)        http_response_405 ;;
+    esac
+) }
+
+_web_get() { (
+    path=$1; shift 1;
+
+    [ -n "$path" ] || { http_response_303 "/web/"; return; }
+
+    file=$(_path "$path") || return
+    path="${path%%\?*}"
+
+    if [ -d "$file" ]; then
+        case "$path" in
+            # remove excess trailing slashes
+            # TODO: improved the redirect, to reduce requests...
+            //*) http_response_303 "/web/${path#//}"; return;;
+            *//) http_response_303 "/web/${path%/}"; return;;
+            */)  ;;
+            *)   http_response_303 "${path}/"; return ;;
+        esac
+
+        page_directory "$file"
+        return
+    fi
+
+    [ -f "$file" ] || { page_404; return; }
+
+    # For now, just serve the actual shared file.
+    serve_file 200 "$file"
+) }
 
 _get() { (
     path=$1; shift;
@@ -204,10 +429,7 @@ _put() { (
     path=$1; shift;
     file=$(_path "$path") || return
 
-    [ -f "$file" ] || {
-        http_response_404 'File not found'
-        return
-    }
+    [ -f "$file" ] || { http_response_404; return; }
 
     _write_file
 ) }
@@ -248,7 +470,7 @@ _path() { (
 
     case "$path" in
         /*) ;;
-        *)  http_response_400 "Path must start with slash ('/')"; return 1 ;;
+        *)  http_response_400 "Path must start with slash ('/'): $path"; return 1 ;;
     esac
 
     case "$path" in
@@ -313,7 +535,7 @@ esac
 
 [ -d "$SHARE_ROOT" ] || {
     error "\$SHARE_ROOT must be a existing directory: %s" "$SHARE_ROOT"
-        http_response_500 'Server config error'
+    http_response_500 'Server config error'
     exit 1
 }
 
