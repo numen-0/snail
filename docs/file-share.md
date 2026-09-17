@@ -17,6 +17,12 @@ The browser interface is available under `/web/`.
 - `/web/path/to/file`: download a file
 - `/web/path/to/directory/`: browse a directory
 
+Directories are required to end with `/`. When browsing a directory without the
+trailing slash, the handler redirects to the canonical path.
+
+The directory browser provides forms for uploading files and creating
+directories, as well as controls for deleting files and empty directories.
+
 ## API
 
 The API is available under `/api/`.
@@ -32,7 +38,7 @@ The API is available under `/api/`.
 | `DELETE`  | file      | Delete a file                                        |
 | `DELETE`  | directory | Delete an empty directory                            |
 
-> Like in the web interface, directories end with `/`.
+Directories must end with `/` when accessed through the API.
 
 ## Configuration
 

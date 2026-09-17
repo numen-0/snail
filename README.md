@@ -1,5 +1,7 @@
 # Snail
 
+![snail](/docs/logo.png)
+
 Snail is a tiny static *HTTP* server written in *POSIX* shell.
 
 It provides the low-level pieces needed to build small *HTTP* servers and

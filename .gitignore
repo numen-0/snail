@@ -3,3 +3,4 @@
 
 /data/file-share/*
 !/data/file-share/style.css
+!/data/file-share/script.js

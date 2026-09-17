@@ -12,7 +12,7 @@ body {
 }
 
 main {
-    max-width: 40rem;
+    max-width: 56rem;
     margin: 0 auto;
 }
 
@@ -28,6 +28,84 @@ nav {
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    padding: 0.4rem 0.7rem;
+    border: 1px solid #bbb;
+    border-radius: 0.25rem;
+    background: #fff;
+    color: #222;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f0f0f0;
+}
+
+button:active {
+    background: #e5e5e5;
+}
+
+.file-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+.form-fields {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    gap: 0.5rem;
+}
+
+.file-form input {
+    font: inherit;
+    color: #222;
+}
+
+.file-form input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #ccc;
+    background: #fafafa;
+}
+
+.file-form input[type="file"] {
+    flex: 1.5;
+    min-width: 0;
+    padding: 0.35rem;
+    border: 1px solid #ccc;
+    background: #fafafa;
+}
+
+.file-form button {
+    flex-shrink: 0;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid #aaa;
+    background: #f5f5f5;
+    color: #222;
+    font: inherit;
+    cursor: pointer;
+}
+
+.file-form button:hover {
+    background: #eee;
+}
+
+.file-form button:active {
+    background: #e5e5e5;
 }
 
 .stats {
@@ -47,10 +125,6 @@ nav {
 
 .stats-row strong {
     font-weight: normal;
-}
-
-.directory a {
-    font-weight: bold;
 }
 
 .files {
@@ -88,6 +162,7 @@ nav {
 }
 
 .files a {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -99,7 +174,7 @@ nav {
 
 .files th:nth-child(1),
 .files td:nth-child(1) {
-    width: 70%;
+    width: auto;
 }
 
 .files th:nth-child(2),
@@ -110,4 +185,13 @@ nav {
 .files th:nth-child(3),
 .files td:nth-child(3) {
     width: 10%;
+}
+
+.files th:nth-child(4),
+.files td:nth-child(4) {
+    width: 5%;
+}
+
+.files .delete {
+    color: #777;
 }

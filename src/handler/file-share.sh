@@ -10,7 +10,6 @@ SHARE_404="${SHARE_ROOT}/404.html"
 
 # TODO: web
 #   - file preview?
-#   - upload files
 #   - template input should be scaped
 #   - ls table:
 #       - date?
@@ -55,14 +54,13 @@ serve() { (
     req_content_length=""
 
     while IFS= read -r header; do
-        [ "$header" = "$_CR" ] && break
+        header="${header%$_CR}"
 
-        [ -n "$header" ] && _validate_headers "$header" || {
+        [ -z "$header" ] && break
+        _validate_headers "$header" || {
             http_response_400 "Invalid header: $header"
             return
         }
-
-        header="${header%$_CR}"
 
         case "$(str_lower "$header")" in
             content-length:*) req_content_length="${header#*:}"
@@ -230,6 +228,7 @@ page_directory() { (
   <meta charset="utf-8">
   <title>Snail - $cdir</title>
   <link rel="stylesheet" href="/api/style.css">
+  <script src="/api/script.js" defer></script>
 </head>
 <body>
   <main>
@@ -240,8 +239,36 @@ page_directory() { (
       <a href="/web$parent">..</a>
     </nav>
 
-    <h1>$cdir</h1>
+    <form class="file-form" id="upload-form">
+        <div class="form-fields">
+          <input
+            id="upload-name"
+            type="text"
+            placeholder="filename"
+            required
+          >
+          <input
+            id="upload-file"
+            type="file"
+            required
+          >
+        </div>
+        <button type="submit">upload file</button>
+    </form>
 
+    <form class="file-form" id="mkdir-form">
+        <div class="form-fields">
+          <input
+            id="mkdir-name"
+            type="text"
+            placeholder="directory name"
+            required
+          >
+        </div>
+        <button type="submit">create directory</button>
+    </form>
+
+    <h1>$cdir</h1>
 
     <table class="files">
       <thead>
@@ -271,20 +298,38 @@ $( ( # Note: if a file has a '\t' on it we are cooked ._.
     path=${entry#"$SHARE_ROOT"}
 
     if [ -d "$entry" ]; then
-        printf '%s' '      <tr class="directory">'
-        printf '<td><a href="/web%s/">%s/</a></td>' "$path" "$name"
-        printf '%s\n' '<td>-</td><td>-</td></tr>'
+        cat <<TR
+        <tr class="directory">
+          <td><a href="/web$path/">$name/</a></td>
+          <td>-</td>
+          <td>-</td>
+          <td>
+            <button type="button" class="delete" data-path="/web$path/">
+              delete
+            </button>
+          </td>
+        </tr>
+TR
     elif [ -f "$entry" ]; then
         type=$(file_content_type "$entry")
         size=$(wc -c < "$entry")
 
-        printf '%s' '      <tr>'
-        printf '<td><a href="/web%s">%s</a></td>' "$path" "$name"
-        printf '<td>%s</td><td>%s</td>' "$type" "$(fmt_bytes_to_human $size)"
-        printf '%s\n' '</tr>'
+        cat <<TR
+        <tr>
+          <td><a href="/web$path">$name</a></td>
+          <td>$type</td>
+          <td>$(fmt_bytes_to_human $size)</td>
+          <td>
+            <button type="button" class="delete" data-path="$path">
+              delete
+            </button>
+          </td>
+        </tr>
+TR
     fi
 done)
-    </tablel>
+      </tbody>
+    </table>
 
   </main>
 </body>
@@ -304,15 +349,22 @@ page_404() {
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>404 - Not Found</title>
-    <link rel="stylesheet" href="/api/style.css">
+  <meta charset="utf-8">
+  <title>404 - Not Found</title>
+  <link rel="stylesheet" href="/api/style.css">
 </head>
 <body>
-    <main>
-        <h1>404</h1>
-        <p>The page you're looking for doesn't exist.</p>
-    </main>
+  <main>
+
+    <nav>
+      <a href="/">home</a>
+      <a href="/web/">root</a>
+    </nav>
+
+    <h1>404</h1>
+    <p>The page you're looking for doesn't exist.</p>
+
+  </main>
 </body>
 </html>
 EOF
@@ -540,3 +592,4 @@ esac
 }
 
 serve
+
