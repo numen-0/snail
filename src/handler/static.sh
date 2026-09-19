@@ -6,8 +6,8 @@
 . "${APP_DIR:-.}/src/lib/http.sh"
 . "${APP_DIR:-.}/src/lib/utils.sh"
 
-: "${STATIC_ROOT:="${APP_DIR:-.}/page"}"
-: "${STATIC_404:="${APP_DIR:-.}/page/404.html"}"
+: "${STATIC_ROOT:="${APP_DIR:-.}/data/static"}"
+: "${STATIC_404:="${STATIC_ROOT}/404.html"}"
 
 # ------------------------------------------------------------------------------
 

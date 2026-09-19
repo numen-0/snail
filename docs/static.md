@@ -9,10 +9,10 @@ It supports `GET` and `HEAD` requests, automatic `index.html` resolution, basic
 
 ## Configuration
 
-| Variable      | Default           | Description                                      |
-|:-------------:|:-----------------:|:-------------------------------------------------|
-| `STATIC_ROOT` | `./page`          | Directory containing the files to serve          |
-| `STATIC_404`  | `./page/404.html` | Custom page served for `404 Not Found` responses |
+| Variable      | Default                  | Description                       |
+|:-------------:|:------------------------:|:----------------------------------|
+| `STATIC_ROOT` | `./data/static`          | Directory containing the files to serve |
+| `STATIC_404`  | `./data/static/404.html` | Custom page served for `404 Not Found` responses |
 
 ## Routing
 

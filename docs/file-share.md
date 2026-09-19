@@ -42,9 +42,9 @@ Directories must end with `/` when accessed through the API.
 
 ## Configuration
 
-| Variable      | Default           | Description                              |
-|:-------------:|:-----------------:|:-----------------------------------------|
-| `SHARE_ROOT`  | `./files`         | Directory containing shared data         |
+| Variable      | Default             | Description                            |
+|:-------------:|:-------------------:|:---------------------------------------|
+| `SHARE_ROOT`  | `./data/file-share` | Directory containing shared data       |
 
 ## Example
 
