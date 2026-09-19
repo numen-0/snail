@@ -472,7 +472,7 @@ _post() { (
                 return
             }
 
-            _write_file
+            _write_file "$file"
             ;;
     esac
 ) }
@@ -483,7 +483,7 @@ _put() { (
 
     [ -f "$file" ] || { http_response_404; return; }
 
-    _write_file
+    _write_file "$file"
 ) }
 
 _delete() { (
@@ -539,6 +539,7 @@ _path() { (
 ) }
 
 _write_file() { (
+    file=$1; shift 1;
     parent=${file%/*}
 
     [ -d "$parent" ] || {
@@ -576,7 +577,7 @@ _write_file() { (
     fi
 ) }
 
-# ------------------------------------------------------------------------------
+# - init ----------------------------------------------------------------------
 
 case "$SHARE_ROOT" in
     */) error "\$SHARE_ROOT can't end with slash ('/'): %s" "$SHARE_ROOT"
